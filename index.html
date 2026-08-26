@@ -7,22 +7,25 @@
         <style>
             body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
             input {
-                display: block;  /* Ensures the input takes up the full width available */
-                margin: 10px auto;  /* Centers it */
+                display: block;
+                margin: 10px auto;
                 padding: 10px;
                 font-size: 16px;
             }
             button { padding: 10px; font-size: 16px; cursor: pointer; }
             #message { margin-top: 20px; font-size: 18px; font-weight: bold; }
             #progress { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+            #hint { margin-top: 10px; font-size: 18px; }
         </style>
     </head>
     <body>
         <h1>Gage's Pi Memorization Game</h1>
         <p id="progress">3.</p>
-        <p id=prompt>Enter the next 5 digits of Pi:</p>
+        <p id="prompt">Enter the next 5 digits of Pi:</p>
         <input type="text" id="user_input" required>
         <button onclick="checkInput()">Submit</button>
+        <button onclick="showHint()">Hint</button>
+        <p id="hint"></p>
         <p id="message"></p>
         <p id="message2"></p>
         <p id="message3"></p>
@@ -40,7 +43,42 @@
             let progressDisplay = "3.";
             let correctSoFar = progressDisplay;
             let numberOfDigits = 5;
+            let hintDigitsShown = 0;
+            let lastHintIndex = null;
             document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits of Pi:";
+
+            function resetHint() {
+                hintDigitsShown = 0;
+                lastHintIndex = null;
+                document.getElementById("hint").textContent = "";
+            }
+
+            function showHint() {
+                const input = document.getElementById("textInput");
+                const checkbox = document.getElementById("toggleCheckbox");
+                let hintIndex = currentIndex;
+
+                if (checkbox.checked) {
+                    const requestedIndex = parseInt(input.value);
+                    if (!isNaN(requestedIndex)) {
+                        hintIndex = requestedIndex;
+                    }
+                }
+
+                if (!piDigits.charAt(hintIndex)) {
+                    document.getElementById("hint").textContent = "No more digits are available.";
+                    return;
+                }
+
+                if (hintIndex !== lastHintIndex) {
+                    hintDigitsShown = 0;
+                    lastHintIndex = hintIndex;
+                }
+
+                hintDigitsShown = Math.min(hintDigitsShown + 1, numberOfDigits);
+                const hintDigits = piDigits.substring(hintIndex, hintIndex + hintDigitsShown);
+                document.getElementById("hint").textContent = "Hint: " + hintDigits;
+            }
 
             function checkInput() {
                 let userInput = document.getElementById("user_input").value;
@@ -67,12 +105,14 @@
                     currentIndex += numberOfDigits;
                     document.getElementById("message2").textContent = currentIndex + " digits so far. Keep going!";
                     document.getElementById("message3").textContent = "";
+                    resetHint();
                     document.getElementById("prompt").display = "none";
                 } else {
                     document.getElementById("message").textContent = "Oops! You said " + userInput + ".  The correct answer was " + correctDigits + ". Try again!";
                     document.getElementById("message2").textContent = "But wow! You got to " + currentIndex + " digits!";
                     document.getElementById("message3").textContent = correctSoFar;
-                    currentIndex = 0; // Reset if incorrect
+                    resetHint();
+                    currentIndex = 0;
                     progressDisplay = "3.";
                     document.getElementById("progress").textContent = progressDisplay;
                     document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
@@ -94,6 +134,7 @@
                 if(! checkbox.checked) {
                     input.value = 0;
                 }
+                resetHint();
             }
             
             function toggleInput2() {
@@ -103,6 +144,7 @@
                 numberOfDigits = checkbox.checked ? parseInt(input.value) : 5;
                 numberOfDigits = isNaN(numberOfDigits) ? 5 : numberOfDigits;
                 document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+                resetHint();
             }
 
             function handleNumDigitsChange(input) {
@@ -112,6 +154,7 @@
                     document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
                 }
                 document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+                resetHint();
             }
 
         </script>
