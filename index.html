@@ -1,162 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pi Memorization Game</title>
-        <style>
-            body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-            input {
-                display: block;
-                margin: 10px auto;
-                padding: 10px;
-                font-size: 16px;
-            }
-            button { padding: 10px; font-size: 16px; cursor: pointer; }
-            #message { margin-top: 20px; font-size: 18px; font-weight: bold; }
-            #progress { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-            #hint { margin-top: 10px; font-size: 18px; }
-        </style>
-    </head>
-    <body>
-        <h1>Gage's Pi Memorization Game</h1>
-        <p id="progress">3.</p>
-        <p id="prompt">Enter the next 5 digits of Pi:</p>
-        <input type="text" id="user_input" required>
-        <button onclick="checkInput()">Submit</button>
-        <button onclick="showHint()">Hint</button>
-        <p id="hint"></p>
-        <p id="message"></p>
-        <p id="message2"></p>
-        <p id="message3"></p>
-        <label>
-            <input type="checkbox" id="toggleCheckbox" onclick="toggleInput()"> Specify start index
-        </label>
-        <input type="text" id="textInput" style="display: none;" placeholder="0">
-        <label>
-            <input type="checkbox" id="toggleCheckbox2" onclick="toggleInput2()"> Specify number of digits
-        </label>
-        <input type="text" id="textInput2" style="display: none;" placeholder="5" onchange="handleNumDigitsChange(this)">
-        <script>
-            let piDigits = "1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482";
-            let currentIndex = 0;
-            let progressDisplay = "3.";
-            let correctSoFar = progressDisplay;
-            let numberOfDigits = 5;
-            let hintDigitsShown = 0;
-            let lastHintIndex = null;
-            document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits of Pi:";
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gage's Pi Memorization Game</title>
+    <style>
+        :root {
+            --bg-deep: #07111f;
+            --bg-mid: #10233d;
+            --panel: rgba(13, 28, 49, 0.88);
+            --panel-soft: rgba(255, 255, 255, 0.06);
+            --text: #f7fbff;
+            --muted: #a9bdd2;
+            --accent: #69d5ff;
+            --accent-2: #a477ff;
+            --success: #7ee7b7;
+            --warning: #ffd37a;
+            --border: rgba(255, 255, 255, 0.12);
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+        }
 
-            function resetHint() {
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 20% 10%, rgba(105, 213, 255, 0.17), transparent 32rem),
+                radial-gradient(circle at 85% 15%, rgba(164, 119, 255, 0.18), transparent 30rem),
+                linear-gradient(155deg, var(--bg-deep), var(--bg-mid));
+            display: flex;
+            justify-content: center;
+            padding: 34px 18px 48px;
+        }
+
+        .page {
+            width: min(920px, 100%);
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .pi-mark {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 14px;
+            display: grid;
+            place-items: center;
+            border-radius: 22px;
+            font-family: Georgia, serif;
+            font-size: 52px;
+            line-height: 1;
+            background: linear-gradient(145deg, rgba(105, 213, 255, 0.2), rgba(164, 119, 255, 0.24));
+            border: 1px solid rgba(255,255,255,.16);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 16px 35px rgba(0,0,0,.22);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            letter-spacing: -0.045em;
+        }
+
+        .subtitle {
+            margin: 8px auto 0;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .game-card {
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: clamp(20px, 4vw, 36px);
+            box-shadow: var(--shadow);
+        }
+
+        .section-label {
+            margin: 0 0 8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-size: .74rem;
+            font-weight: 800;
+        }
+
+        #progress {
+            min-height: 92px;
+            margin: 0 0 22px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: rgba(0,0,0,.2);
+            border: 1px solid rgba(255,255,255,.08);
+            font-family: "Courier New", monospace;
+            font-size: clamp(1.5rem, 4vw, 2.35rem);
+            font-weight: 700;
+            line-height: 1.45;
+            text-align: left;
+            overflow-wrap: anywhere;
+            color: #e9f8ff;
+            box-shadow: inset 0 0 25px rgba(105,213,255,.035);
+        }
+
+        #prompt {
+            margin: 0 0 12px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .entry-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            min-width: 0;
+            padding: 15px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,.13);
+            background: rgba(255,255,255,.075);
+            color: var(--text);
+            outline: none;
+            font: inherit;
+            font-size: 1.08rem;
+            transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(105,213,255,.8);
+            background: rgba(255,255,255,.1);
+            box-shadow: 0 0 0 4px rgba(105,213,255,.12);
+        }
+
+        button {
+            border: 0;
+            border-radius: 14px;
+            padding: 0 20px;
+            min-height: 52px;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform .12s ease, filter .12s ease, background .12s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.06);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn {
+            color: #06131f;
+            background: linear-gradient(135deg, var(--accent), #b2edff);
+        }
+
+        .hint-btn {
+            color: var(--text);
+            background: rgba(255,255,255,.09);
+            border: 1px solid rgba(255,255,255,.12);
+        }
+
+        #hint {
+            min-height: 28px;
+            margin: 14px 0 0;
+            color: var(--warning);
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .messages {
+            margin-top: 18px;
+            display: grid;
+            gap: 6px;
+        }
+
+        #message {
+            margin: 0;
+            font-size: 1.08rem;
+            font-weight: 800;
+        }
+
+        #message2,
+        #message3 {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .settings {
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,.09);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .setting-card {
+            padding: 14px;
+            border-radius: 16px;
+            background: var(--panel-soft);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .setting-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: #dcecff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .setting-card input[type="text"] {
+            margin-top: 12px;
+            min-height: 46px;
+            padding: 11px 12px;
+            font-size: .98rem;
+        }
+
+        .footer-note {
+            margin: 16px 0 0;
+            text-align: center;
+            color: rgba(213,229,245,.62);
+            font-size: .84rem;
+        }
+
+        @media (max-width: 680px) {
+            body {
+                padding: 22px 12px 34px;
+            }
+
+            .entry-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            #user_input {
+                grid-column: 1 / -1;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                padding: 0 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <div class="pi-mark">π</div>
+            <h1>Gage's Pi Challenge</h1>
+            <p class="subtitle">One chunk at a time. No pressure. Except from mathematics.</p>
+        </header>
+
+        <section class="game-card">
+            <p class="section-label">Your run</p>
+            <p id="progress">3.</p>
+
+            <p id="prompt">Enter the next 5 digits of Pi:</p>
+            <div class="entry-row">
+                <input type="text" id="user_input" inputmode="numeric" autocomplete="off" required aria-label="Next digits of Pi">
+                <button class="submit-btn" onclick="checkInput()">Submit</button>
+                <button class="hint-btn" onclick="showHint()">Hint</button>
+            </div>
+
+            <p id="hint"></p>
+
+            <div class="messages" aria-live="polite">
+                <p id="message"></p>
+                <p id="message2"></p>
+                <p id="message3"></p>
+            </div>
+
+            <div class="settings">
+                <p class="section-label">Challenge settings</p>
+                <div class="settings-grid">
+                    <div class="setting-card">
+                        <label class="setting-toggle">
+                            <input type="checkbox" id="toggleCheckbox" onclick="toggleInput()">
+                            <span>Specify start index</span>
+                        </label>
+                        <input type="text" id="textInput" style="display: none;" placeholder="0" inputmode="numeric">
+                    </div>
+
+                    <div class="setting-card">
+                        <label class="setting-toggle">
+                            <input type="checkbox" id="toggleCheckbox2" onclick="toggleInput2()">
+                            <span>Specify number of digits</span>
+                        </label>
+                        <input type="text" id="textInput2" style="display: none;" placeholder="5" inputmode="numeric" onchange="handleNumDigitsChange(this)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <p class="footer-note">Memorizing π is objectively unnecessary, which is exactly why doing it is impressive.</p>
+    </main>
+
+    <script>
+        let piDigits = "1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482";
+        let currentIndex = 0;
+        let progressDisplay = "3.";
+        let correctSoFar = progressDisplay;
+        let numberOfDigits = 5;
+        let hintDigitsShown = 0;
+        let lastHintIndex = null;
+        document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits of Pi:";
+
+        function resetHint() {
+            hintDigitsShown = 0;
+            lastHintIndex = null;
+            document.getElementById("hint").textContent = "";
+        }
+
+        function showHint() {
+            const input = document.getElementById("textInput");
+            const checkbox = document.getElementById("toggleCheckbox");
+            let hintIndex = currentIndex;
+
+            if (checkbox.checked) {
+                const requestedIndex = parseInt(input.value);
+                if (!isNaN(requestedIndex)) {
+                    hintIndex = requestedIndex;
+                }
+            }
+
+            if (!piDigits.charAt(hintIndex)) {
+                document.getElementById("hint").textContent = "No more digits are available.";
+                return;
+            }
+
+            if (hintIndex !== lastHintIndex) {
                 hintDigitsShown = 0;
-                lastHintIndex = null;
-                document.getElementById("hint").textContent = "";
+                lastHintIndex = hintIndex;
             }
 
-            function showHint() {
-                const input = document.getElementById("textInput");
-                const checkbox = document.getElementById("toggleCheckbox");
-                let hintIndex = currentIndex;
+            hintDigitsShown = Math.min(hintDigitsShown + 1, numberOfDigits);
+            const hintDigits = piDigits.substring(hintIndex, hintIndex + hintDigitsShown);
+            document.getElementById("hint").textContent = "Hint: " + hintDigits;
+        }
 
-                if (checkbox.checked) {
-                    const requestedIndex = parseInt(input.value);
-                    if (!isNaN(requestedIndex)) {
-                        hintIndex = requestedIndex;
-                    }
-                }
+        function checkInput() {
+            let userInput = document.getElementById("user_input").value;
+            var input = document.getElementById("textInput");
+            var checkbox = document.getElementById("toggleCheckbox");
+            if(checkbox.checked) {
+                currentIndex = parseInt(input.value);
+                checkbox.checked = false;
+                progressDisplay = "3." + piDigits.substring(0, currentIndex);
+                input.style.display = "none";
+            }
+            let correctDigits = piDigits.substring(currentIndex, currentIndex + numberOfDigits);
 
-                if (!piDigits.charAt(hintIndex)) {
-                    document.getElementById("hint").textContent = "No more digits are available.";
-                    return;
-                }
-
-                if (hintIndex !== lastHintIndex) {
-                    hintDigitsShown = 0;
-                    lastHintIndex = hintIndex;
-                }
-
-                hintDigitsShown = Math.min(hintDigitsShown + 1, numberOfDigits);
-                const hintDigits = piDigits.substring(hintIndex, hintIndex + hintDigitsShown);
-                document.getElementById("hint").textContent = "Hint: " + hintDigits;
+            if (userInput.length !== numberOfDigits || isNaN(userInput)) {
+                document.getElementById("message").textContent = "⚠️ Please enter exactly " + numberOfDigits + " digits.";
+                return;
             }
 
-            function checkInput() {
-                let userInput = document.getElementById("user_input").value;
-                var input = document.getElementById("textInput");
-                var checkbox = document.getElementById("toggleCheckbox");
-                if(checkbox.checked) {
-                    currentIndex = parseInt(input.value);
-                    checkbox.checked = false;
-                    progressDisplay = "3." + piDigits.substring(0, currentIndex);
-                    input.style.display = "none";
-                }
-                let correctDigits = piDigits.substring(currentIndex, currentIndex + numberOfDigits);
-
-                if (userInput.length !== numberOfDigits || isNaN(userInput)) {
-                    document.getElementById("message").textContent = "⚠️ Please enter exactly " + numberOfDigits + " digits.";
-                    return;
-                }
-
-                if (userInput === correctDigits) {
-                    progressDisplay += userInput;
-                    correctSoFar = progressDisplay;
-                    document.getElementById("progress").textContent = progressDisplay;
-                    document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
-                    currentIndex += numberOfDigits;
-                    document.getElementById("message2").textContent = currentIndex + " digits so far. Keep going!";
-                    document.getElementById("message3").textContent = "";
-                    resetHint();
-                    document.getElementById("prompt").display = "none";
-                } else {
-                    document.getElementById("message").textContent = "Oops! You said " + userInput + ".  The correct answer was " + correctDigits + ". Try again!";
-                    document.getElementById("message2").textContent = "But wow! You got to " + currentIndex + " digits!";
-                    document.getElementById("message3").textContent = correctSoFar;
-                    resetHint();
-                    currentIndex = 0;
-                    progressDisplay = "3.";
-                    document.getElementById("progress").textContent = progressDisplay;
-                    document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
-                    document.getElementById("prompt").display = "block";
-                }
-                document.getElementById("user_input").value = "";
-            }
-
-            document.getElementById("user_input").addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    checkInput();
-                }
-            });
-
-            function toggleInput() {
-                var input = document.getElementById("textInput");
-                var checkbox = document.getElementById("toggleCheckbox");
-                input.style.display = checkbox.checked ? "block" : "none";
-                if(! checkbox.checked) {
-                    input.value = 0;
-                }
+            if (userInput === correctDigits) {
+                progressDisplay += userInput;
+                correctSoFar = progressDisplay;
+                document.getElementById("progress").textContent = progressDisplay;
+                document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
+                currentIndex += numberOfDigits;
+                document.getElementById("message2").textContent = currentIndex + " digits so far. Keep going!";
+                document.getElementById("message3").textContent = "";
                 resetHint();
-            }
-            
-            function toggleInput2() {
-                var input = document.getElementById("textInput2");
-                var checkbox = document.getElementById("toggleCheckbox2");
-                input.style.display = checkbox.checked ? "block" : "none";
-                numberOfDigits = checkbox.checked ? parseInt(input.value) : 5;
-                numberOfDigits = isNaN(numberOfDigits) ? 5 : numberOfDigits;
+                document.getElementById("prompt").display = "none";
+            } else {
+                document.getElementById("message").textContent = "Oops! You said " + userInput + ".  The correct answer was " + correctDigits + ". Try again!";
+                document.getElementById("message2").textContent = "But wow! You got to " + currentIndex + " digits!";
+                document.getElementById("message3").textContent = correctSoFar;
+                resetHint();
+                currentIndex = 0;
+                progressDisplay = "3.";
+                document.getElementById("progress").textContent = progressDisplay;
                 document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
-                resetHint();
+                document.getElementById("prompt").display = "block";
             }
+            document.getElementById("user_input").value = "";
+            document.getElementById("user_input").focus();
+        }
 
-            function handleNumDigitsChange(input) {
-                var input = document.getElementById("textInput2");
-                numberOfDigits = isNaN(parseInt(input.value)) ? 5 : parseInt(input.value);
-                if(document.getElementById("message").textContent != "") {
-                    document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
-                }
-                document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
-                resetHint();
+        document.getElementById("user_input").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                checkInput();
             }
+        });
 
-        </script>
-    </body>
+        function toggleInput() {
+            var input = document.getElementById("textInput");
+            var checkbox = document.getElementById("toggleCheckbox");
+            input.style.display = checkbox.checked ? "block" : "none";
+            if(! checkbox.checked) {
+                input.value = 0;
+            }
+            resetHint();
+        }
+        
+        function toggleInput2() {
+            var input = document.getElementById("textInput2");
+            var checkbox = document.getElementById("toggleCheckbox2");
+            input.style.display = checkbox.checked ? "block" : "none";
+            numberOfDigits = checkbox.checked ? parseInt(input.value) : 5;
+            numberOfDigits = isNaN(numberOfDigits) ? 5 : numberOfDigits;
+            document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+            resetHint();
+        }
+
+        function handleNumDigitsChange(input) {
+            var input = document.getElementById("textInput2");
+            numberOfDigits = isNaN(parseInt(input.value)) ? 5 : parseInt(input.value);
+            if(document.getElementById("message").textContent != "") {
+                document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
+            }
+            document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+            resetHint();
+        }
+    </script>
+</body>
 </html>
