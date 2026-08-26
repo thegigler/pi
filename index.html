@@ -43,7 +43,15 @@
             let progressDisplay = "3.";
             let correctSoFar = progressDisplay;
             let numberOfDigits = 5;
+            let hintDigitsShown = 0;
+            let lastHintIndex = null;
             document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits of Pi:";
+
+            function resetHint() {
+                hintDigitsShown = 0;
+                lastHintIndex = null;
+                document.getElementById("hint").textContent = "";
+            }
 
             function showHint() {
                 const input = document.getElementById("textInput");
@@ -57,10 +65,19 @@
                     }
                 }
 
-                const nextDigit = piDigits.charAt(hintIndex);
-                document.getElementById("hint").textContent = nextDigit
-                    ? "Hint: the next digit is " + nextDigit + "."
-                    : "No more digits are available.";
+                if (!piDigits.charAt(hintIndex)) {
+                    document.getElementById("hint").textContent = "No more digits are available.";
+                    return;
+                }
+
+                if (hintIndex !== lastHintIndex) {
+                    hintDigitsShown = 0;
+                    lastHintIndex = hintIndex;
+                }
+
+                hintDigitsShown = Math.min(hintDigitsShown + 1, numberOfDigits);
+                const hintDigits = piDigits.substring(hintIndex, hintIndex + hintDigitsShown);
+                document.getElementById("hint").textContent = "Hint: " + hintDigits;
             }
 
             function checkInput() {
@@ -88,13 +105,13 @@
                     currentIndex += numberOfDigits;
                     document.getElementById("message2").textContent = currentIndex + " digits so far. Keep going!";
                     document.getElementById("message3").textContent = "";
-                    document.getElementById("hint").textContent = "";
+                    resetHint();
                     document.getElementById("prompt").display = "none";
                 } else {
                     document.getElementById("message").textContent = "Oops! You said " + userInput + ".  The correct answer was " + correctDigits + ". Try again!";
                     document.getElementById("message2").textContent = "But wow! You got to " + currentIndex + " digits!";
                     document.getElementById("message3").textContent = correctSoFar;
-                    document.getElementById("hint").textContent = "";
+                    resetHint();
                     currentIndex = 0;
                     progressDisplay = "3.";
                     document.getElementById("progress").textContent = progressDisplay;
@@ -117,7 +134,7 @@
                 if(! checkbox.checked) {
                     input.value = 0;
                 }
-                document.getElementById("hint").textContent = "";
+                resetHint();
             }
             
             function toggleInput2() {
@@ -127,6 +144,7 @@
                 numberOfDigits = checkbox.checked ? parseInt(input.value) : 5;
                 numberOfDigits = isNaN(numberOfDigits) ? 5 : numberOfDigits;
                 document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+                resetHint();
             }
 
             function handleNumDigitsChange(input) {
@@ -136,6 +154,7 @@
                     document.getElementById("message").textContent = "Correct! Enter the next " + numberOfDigits + " digits.";
                 }
                 document.getElementById("prompt").textContent = "Enter the next " + numberOfDigits + " digits.";
+                resetHint();
             }
 
         </script>
